@@ -1,0 +1,59 @@
+#root {
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  background: #080a0d;
+  color: #eee;
+  font-family: sans-serif;
+}
+
+.trial {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+}
+
+.system {
+  position: absolute;
+  top: 30px;
+  font-size: 12px;
+  letter-spacing: 0.35em;
+  opacity: 0.4;
+}
+
+.character {
+  width: min(700px, 80vw);
+}
+
+.name {
+  font-size: 14px;
+  opacity: 0.6;
+  margin-bottom: 10px;
+}
+
+.dialogue {
+  border-top: 1px solid #555;
+  border-bottom: 1px solid #555;
+  padding: 32px;
+  text-align: center;
+  font-size: 22px;
+}
+
+button {
+  background: transparent;
+  color: #eee;
+  border: 1px solid #777;
+  padding: 14px 40px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button:hover {
+  background: #eee;
+  color: #080a0d;
+}
