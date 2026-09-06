@@ -2,58 +2,191 @@
   min-height: 100vh;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  background: #080a0d;
-  color: #eee;
-  font-family: sans-serif;
-}
-
-.trial {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-}
-
-.system {
-  position: absolute;
-  top: 30px;
-  font-size: 12px;
-  letter-spacing: 0.35em;
-  opacity: 0.4;
-}
-
-.character {
-  width: min(700px, 80vw);
-}
-
-.name {
-  font-size: 14px;
-  opacity: 0.6;
-  margin-bottom: 10px;
-}
-
-.dialogue {
-  border-top: 1px solid #555;
-  border-bottom: 1px solid #555;
-  padding: 32px;
-  text-align: center;
-  font-size: 22px;
+  background:
+    radial-gradient(circle at center, #252733 0%, #11131a 55%, #07080c 100%);
+  color: #f2f2f2;
+  font-family:
+    "Yu Mincho",
+    "Hiragino Mincho ProN",
+    serif;
 }
 
 button {
-  background: transparent;
-  color: #eee;
-  border: 1px solid #777;
-  padding: 14px 40px;
-  cursor: pointer;
-  font-size: 16px;
+  font: inherit;
 }
 
-button:hover {
-  background: #eee;
-  color: #080a0d;
+.game {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.virtue {
+  position: absolute;
+  top: 26px;
+  right: 32px;
+  z-index: 10;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+
+  padding: 0;
+
+  border: none;
+  background: transparent;
+
+  font-family: monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  opacity: 0.72;
+}
+
+.virtue span {
+  font-size: 34px;
+  letter-spacing: 0.08em;
+}
+
+.character-area {
+  height: 62vh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-top: 30px;
+}
+
+.character-image {
+  height: 48vh;
+  max-width: 58vw;
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+.dialogue-area {
+  position: absolute;
+  right: 8vw;
+  top: 30vh;
+
+  width: min(560px, 40vw);
+  min-height: auto;
+
+  padding: 0;
+  border: none;
+  background: transparent;
+  backdrop-filter: none;
+
+  text-align: left;
+}
+
+.speaker {
+  margin-bottom: 14px;
+
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  opacity: 0.45;
+}
+
+.dialogue {
+  min-height: 0;
+  font-size: 30px;
+  line-height: 1.7;
+  letter-spacing: 0.06em;
+  text-align: left;
+
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.9),
+    0 0 18px rgba(0, 0, 0, 0.7);
+}
+
+.next-button {
+  display: block;
+  margin: 24px 0 0 auto;
+
+  padding: 10px 26px;
+
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: white;
+
+  cursor: pointer;
+}
+
+.next-button:hover {
+  background: white;
+  color: black;
+}
+
+.choices {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(3px);
+
+  z-index: 20;
+}
+
+.choice-button {
+  width: min(560px, 72vw);
+  flex: none;
+
+  padding: 18px 28px;
+
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(12, 14, 18, 0.92);
+  color: white;
+
+  cursor: pointer;
+  transition: 0.15s;
+
+  font-size: 20px;
+  letter-spacing: 0.08em;
+}
+
+.choice-button:hover {
+  transform: translateX(8px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.delta {
+  margin-top: 24px;
+
+  text-align: center;
+  font-size: 32px;
+  font-weight: bold;
+
+  animation: pop 0.35s ease-out;
+}
+
+.plus {
+  color: #b8ffcf;
+}
+
+.minus {
+  color: #ffb2b2;
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
