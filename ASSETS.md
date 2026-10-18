@@ -39,3 +39,4 @@ https://zeta-ai.io/ja/plots/dcece1d2-09fb-4188-b3e3-258880293375/profile
 ## ゆうの座り絵（レビュー反映）
 
 public/images/adv/yu-seated.png に、ユーザー提供の d9bcb25c-a2b8-43f3-975d-ede2dee5db5a.png を再採用。足の不自由さに合わせて会話中も座位とする。生成した立位の yu.png は比較用に保持し、現行ゲームからは参照しない。
+`public/images/adv/yu-seated-v2.png`: 元のゆうの座り絵を image_gen で透過・右端補完。生成指示は docs/art/yu-seated-v2-prompt.txt。元画像と旧立ち絵は保存。

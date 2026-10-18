@@ -1,0 +1,4 @@
+Built-in image_gen / background-extraction
+Source: C:/Users/warui/Dropbox/picture/AI/d9bcb25c-a2b8-43f3-975d-ede2dee5db5a.png
+Output: public/images/adv/yu-seated-v2.png
+Edit target: attached original seated Yu illustration. For a visual novel sprite, remove the entire off-white background to actual transparent alpha. Extend the canvas on the right and reconstruct the cropped right edge of her hood, back and clothing with a complete natural silhouette and transparent margin. Keep the original face, short ivory blond bob, honey eyes, shy expression, seated knees-hugged pose, sleeves near mouth, modest oversized ivory hoodie and original thin dark linework and flat warm taupe cel shading exactly as close as possible. Do not redesign or make her stand. Preserve existing lower crop; only repair the right crop. No chair, props, background, text, shadow backdrop, or checkerboard baked into image. True transparent background.

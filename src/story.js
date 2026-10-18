@@ -1,6 +1,6 @@
 import {people as oldPeople, story as oldStory, contextAt as oldContext, decodeSave as decodeLegacy} from './story-v1.js'
 import {chapters, routeEndings} from './chapters.js'
-export const people = {...oldPeople, yu:{...oldPeople.yu,image:'/images/adv/yu-seated.png'}}
+export const people = {...oldPeople, yu:{...oldPeople.yu,image:'/images/adv/yu-seated-v2.png'}}
 export const names = {self:'僕',narrator:'地の文',...Object.fromEntries(Object.entries(people).map(([id,p])=>[id,p.name]))}
 const say = (who,text) => ({who,text})
 const answer = (text,delta,reason,reply,flag) => ({text,delta,reason,reply,flag,spoken:true})
