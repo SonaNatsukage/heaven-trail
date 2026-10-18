@@ -1,132 +1,48 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { people, story, endings, initialGame, contextAt, reduceGame, decodeSave } from './story.js'
+import { sound } from './sound.js'
 import './App.css'
-
-const scenes = [
-  {
-    type: 'dialogue',
-    speaker: 'ゆめ',
-    text: 'それでは、あなたの審査を開始します。',
-  },
-  {
-    type: 'dialogue',
-    speaker: 'ゆめ',
-    text: 'あなたは昨日、誰かを助けましたか？',
-  },
-  {
-    type: 'choice',
-    speaker: 'ゆめ',
-    text: '回答してください。',
-    choices: [
-      {
-        label: '助けた',
-        nextText: 'そうですか。では、その善行を記録します。',
-        delta: 3,
-      },
-      {
-        label: '助けていない',
-        nextText: '正直ですね。嘘をつかなかった点は評価します。',
-        delta: 1,
-      },
-      {
-        label: '覚えていない',
-        nextText: '記憶が曖昧ですか。少し確認が必要ですね。',
-        delta: -2,
-      },
-    ],
-  },
-]
-
-function App() {
-  const [sceneIndex, setSceneIndex] = useState(0)
-  const [virtue, setVirtue] = useState(83)
-  const [result, setResult] = useState(null)
-
-  const scene = scenes[sceneIndex]
-
-  const nextScene = () => {
-    if (scene.type === 'dialogue' && sceneIndex < scenes.length - 1) {
-      setSceneIndex(sceneIndex + 1)
-      setResult(null)
-    }
-  }
-
-  const choose = (choice) => {
-    setVirtue((current) => current + choice.delta)
-    setResult({
-      text: choice.nextText,
-      delta: choice.delta,
-    })
-  }
-
-  const reset = () => {
-    setSceneIndex(0)
-    setVirtue(83)
-    setResult(null)
-  }
-
-  return (
-    <main className="game">
-      <div className="virtue">
-        徳ポイント
-        <span>{virtue}</span>
-      </div>
-
-      <section className="character-area">
-        <img
-          className="character-image"
-          src="/images/characters/yume/normal.png"
-          alt="ゆめ"
-        />
-      </section>
-
-      <section className="dialogue-area">
-        {!result ? (
-          <>
-            <div className="speaker">{scene.speaker}</div>
-            <div className="dialogue">{scene.text}</div>
-
-            {scene.type === 'dialogue' && (
-              <button className="next-button" onClick={nextScene}>
-                次へ
-              </button>
-            )}
-
-            {scene.type === 'choice' && (
-              <div className="choices">
-                {scene.choices.map((choice) => (
-                  <button
-                    key={choice.label}
-                    className="choice-button"
-                    onClick={() => choose(choice)}
-                  >
-                    {choice.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="speaker">ゆめ</div>
-            <div className="dialogue">{result.text}</div>
-
-            <div
-              className={`delta ${
-                result.delta >= 0 ? 'plus' : 'minus'
-              }`}
-            >
-              徳 {result.delta >= 0 ? '+' : ''}
-              {result.delta}
-            </div>
-
-            <button className="next-button" onClick={reset}>
-              最初から
-            </button>
-          </>
-        )}
-      </section>
-    </main>
-  )
+const SLOT='heaven-adv-save-v1', OPTIONS='heaven-adv-options-v1'
+const names={self:'僕',narrator:'',system:'窓口の記録',...Object.fromEntries(Object.entries(people).map(([id,p])=>[id,p.name]))}
+function readOptions(){try{const s=JSON.parse(localStorage.getItem(OPTIONS));if(s&&[s.bgm,s.se].every(n=>typeof n==='number'&&n>=0&&n<=1)&&typeof s.muted==='boolean')return s}catch{}return {bgm:.42,se:.45,muted:false}}
+function readSlot(){try{const raw=localStorage.getItem(SLOT);return raw?decodeSave(raw):null}catch{return null}}
+export default function App(){
+ const [state,setState]=useState(initialGame),[started,setStarted]=useState(false),[modal,setModal]=useState(null),[notice,setNotice]=useState(''),[options,setOptions]=useState(readOptions),[slot,setSlot]=useState(readSlot),[reveal,setReveal]=useState({text:"",count:0}),[audioStatus,setAudioStatus]=useState('音声オフ')
+ const dialog=useRef(null),noticeTimer=useRef(null),node=story[state.index],ctx=contextAt(state.index),person=people[ctx.portrait]
+ const text=state.reply?.reply||node.text,shown=reveal.text===text?reveal.count:0,complete=shown>=text.length,ending=endings[state.ending],sceneLabel={reception:'転生受付',cafe:'待合室のカフェ',quiet:'待合室のカフェ'}[ctx.scene]
+ function setShown(count){setReveal({text,count})}
+ function tell(message){setNotice(message);clearTimeout(noticeTimer.current);noticeTimer.current=setTimeout(()=>setNotice(''),4000)}
+ useEffect(()=>{const t=setInterval(()=>setReveal(n=>n.text===text&&n.count===text.length?n:{text,count:Math.min(text.length,n.text===text?n.count+2:2)}),24);return()=>clearInterval(t)},[text])
+ useEffect(()=>{sound.settings(options.bgm,options.se,options.muted);try{localStorage.setItem(OPTIONS,JSON.stringify(options))}catch{}},[options])
+ useEffect(()=>{if(!started)return;sound.play(ctx.scene);if(node.sfx&&!state.reply)sound.effect(node.sfx)},[started,ctx.scene,state.index,state.reply,node.sfx])
+ useEffect(()=>{const t=setInterval(()=>setAudioStatus(sound.status()),400);return()=>{clearInterval(t);clearTimeout(noticeTimer.current);sound.pause()}},[])
+ useEffect(()=>{if(modal){dialog.current?.showModal()}else dialog.current?.close()},[modal])
+ function advance(){if(!complete){setShown(text.length);return}sound.effect('tap');setState(s=>reduceGame(s,{type:'next'}))}
+ useEffect(()=>{function key(e){if(!started||modal||state.ended||['BUTTON','INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;if(e.code==='Space'||e.code==='Enter'){e.preventDefault();if(!complete)setReveal({text,count:text.length});else if(!node.choices||state.reply)setState(s=>reduceGame(s,{type:'next'}))}}window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[started,modal,state.ended,complete,text,node.choices,state.reply])
+ async function start(withAudio){if(withAudio){if(!await sound.unlock())tell('音声を開始できませんでした。設定から再開できます。');else sound.effect('bell')}else{sound.pause();sound.enabled=false}setStarted(true)}
+ function choose(index){sound.effect(node.choices[index].delta>=0?'plus':'minus');setState(s=>reduceGame(s,{type:'choose',index}))}
+ function save(){try{const data={version:1,date:new Date().toISOString(),actions:state.actions};localStorage.setItem(SLOT,JSON.stringify(data));setSlot(decodeSave(JSON.stringify(data)));tell('この場所を保存しました。');sound.effect('paper')}catch{tell('保存できませんでした。ブラウザの保存設定をご確認ください。')}}
+ async function load(){const saved=readSlot();if(!saved){tell('有効なセーブデータがありません。');return}if(!started||sound.enabled)await sound.unlock();setState(saved.state);setSlot(saved);setStarted(true);setModal(null);tell('保存した場所から再開しました。')}
+ function restart(){setState(initialGame());setModal(null);setStarted(true);tell('第0話の最初に戻りました。セーブデータは残っています。')}
+ const chapter=state.index<15?'01 / 白い窓口':state.index<44?'02 / カップの向こう':'03 / 忘れる前に'
+ return <main className={`adv ${ctx.scene} ${!started?'on-title':''}`}>
+  <header className="topbar"><div className="wordmark">HEAVEN <span>TRAIL</span><small>来世が決まるまで、ここにいて。</small></div><span className="edition">A STORY BETWEEN TWO LIVES</span><button className="icon-button" onClick={()=>setModal('settings')} aria-label="音量と設定">♫ <span>{audioStatus}</span></button></header>
+  {!started?<section className="title-screen"><div className="title-copy"><span className="kicker">PROLOGUE / EPISODE 00</span><h1>来世が決まるまで、<br/>ここにいて。</h1><p className="title-sub">忘れてしまう、その前に。<br/>もう一杯だけ、話しませんか。</p><div className="title-rule"/><p className="episode">第0話 <span>冷めないコーヒー</span></p><button className="solid" onClick={()=>start(true)}>音ありで、物語を始める <span>→</span></button><div className="title-secondary"><button onClick={()=>start(false)}>音なしで始める</button><button disabled={!slot} onClick={load}>つづきから</button></div><p className="small-note">選択式テキストADV ・ 第0話<br/>死後の世界と、生前の病気に触れる物語です。</p></div><div className="title-art"><div className="orb"/><img src="/images/adv/god.png" alt="白い部屋で微笑むかみさま"/><div className="art-caption">「次の人生を決めるまで、<br/>少しここで話しませんか。」</div></div><span className="vertical-note">ここでの記憶は、転生すると消えてしまう。</span></section>:<>
+   <section className="scene-stage" aria-label="物語の場面"><div className="window-lines" aria-hidden="true"/><div className="location"><span className="kicker">{chapter}</span><h1>{sceneLabel}</h1><div className="location-line"/><p>{ctx.scene==='reception'?'まだ、何も決めなくていい。':ctx.scene==='cafe'?'カップ一杯ぶんの、次の人生。':'この会話を、覚えているうちに。'}</p><span className="chapter-tag">第0話　冷めないコーヒー</span></div><div className="portrait" key={ctx.portrait}><img src={person.image} alt={person.name} className={ctx.portrait==='god'?'god-image':''}/><div className="portrait-name"><span>{person.role}</span><strong>{person.name}</strong></div></div><div className="score-panel"><span>徳ポイント</span><strong aria-live="polite">{state.score}<small> pt</small></strong><meter min="0" max="100" value={state.score} aria-label="徳ポイント"/><small>転生窓口による評価</small></div><span className="scene-number">{String(state.index+1).padStart(2,'0')} <i>/ {story.length}</i></span></section>
+   {state.ended?<section className="dialogue-box ending-box"><div><span className="kicker">EPISODE 00 / FIN</span><h2>{ending.title}</h2><p>{ending.text}</p></div><div className="ending-side"><p>{ending.last}</p><span className="end-score">現在の徳ポイント　{state.score}</span><p className="small-note">転生の手続きは、まだ先。第0話はここまでです。<br/>結末は最後の選択で変わります。</p><button className="solid" onClick={()=>setModal('restart')}>もう一度、最初から →</button></div></section>:<section className={`dialogue-box ${node.choices&&!state.reply?'has-choices':''}`} aria-label="会話"><div className="dialogue-main"><div className="speaker"><span className="speaker-dash"/>{state.reply?'会話のつづき':names[node.who]||'MONOLOGUE'}<small>{state.reply?'RESPONSE':node.who==='self'?'YOU':node.who==='narrator'?'':'DIALOGUE'}</small></div><p className="dialogue-text" aria-label={text}>{text.slice(0,shown)}{!complete&&<span className="caret">▎</span>}</p>{state.reply&&<div className={`delta-tag ${state.reply.delta<0?'negative':''}`} aria-live="polite">徳 {state.reply.delta>=0?'+':''}{state.reply.delta}<span>{state.reply.reason}</span></div>}{!complete?<button className="read-next" onClick={()=>setShown(text.length)}>全文を表示 <span>↓</span></button>:(!node.choices||state.reply)?<button className="read-next" onClick={advance}>{state.ending?'この話の結びへ':'次へ'} <span>→</span></button>:<span className="choice-hint">あなたの言葉を選んでください。</span>}</div>{node.choices&&!state.reply&&complete&&<div className="choice-list">{node.choices.map((c,i)=><button key={c.text} onClick={()=>choose(i)}><span>0{i+1}</span>{c.text}<b>↗</b></button>)}{<small>選択によって徳と会話が変化します。</small>}</div>}</section>}
+   <nav className="bottom-bar" aria-label="ゲームメニュー"><span className="reading-hint">CLICK / SPACE　読み進める</span><div><button onClick={()=>setModal('history')}>会話履歴</button><button onClick={()=>setModal('notebook')}>手帳</button><button onClick={()=>setModal('save')}>セーブ</button><button disabled={!slot} onClick={()=>setModal('load')}>ロード</button><button onClick={()=>setModal('settings')}>設定</button></div></nav>
+  </>}
+  <div className="toast" role="status">{notice}</div>
+  <dialog ref={dialog} onCancel={()=>setModal(null)} onClick={e=>{if(e.target===dialog.current)setModal(null)}}><div className="modal-head"><span className="kicker">HEAVEN TRAIL / RECORDS</span><button onClick={()=>setModal(null)} aria-label="閉じる">×</button></div>
+   {modal==='settings'&&<><h2>音と、読む時間。</h2><p className="modal-intro">BGMと効果音は個別に調整できます。</p><label className="volume">BGM <span>{Math.round(options.bgm*100)}%</span><input aria-label="BGM音量" type="range" min="0" max="1" step=".01" value={options.bgm} onChange={e=>setOptions(o=>({...o,bgm:Number(e.target.value)}))}/></label><label className="volume">効果音 <span>{Math.round(options.se*100)}%</span><input aria-label="効果音音量" type="range" min="0" max="1" step=".01" value={options.se} onChange={e=>setOptions(o=>({...o,se:Number(e.target.value)}))}/></label><label className="mute"><input type="checkbox" checked={options.muted} onChange={e=>setOptions(o=>({...o,muted:e.target.checked}))}/>すべての音をミュート</label><div className="setting-actions"><button onClick={async()=>{await sound.unlock();await sound.play(ctx.scene);setAudioStatus(sound.status())}}>音声を有効化・再開</button><button onClick={async()=>{await sound.unlock();sound.effect('plus')}}>効果音を試聴</button></div><p className="small-note">{audioStatus} ／ BGM 3曲・オリジナル音源<br/>Space / Enter：文字送り　Esc：この画面を閉じる</p>{started&&<button className="text-link" onClick={()=>setModal('restart')}>最初から読み直す</button>}</>}
+   {modal==='history'&&<><h2>会話履歴</h2><div className="history-list">{state.history.length?state.history.map((h,i)=><article key={i}><span>{names[h.who]||'地の文'}</span><p>{h.text}</p></article>):<p>まだ記録はありません。</p>}</div></>}
+   {modal==='notebook'&&<><h2>来世の手帳</h2><article className="notebook-entry"><span>01 / 制度</span><h3>徳ポイント</h3><p>来世の条件に関わる、窓口による評価。人の価値や、相手の気持ちのすべてを表す数字ではない。</p></article>{state.index>=15&&<article className="notebook-entry"><span>02 / 出会い</span><h3>待合室のカフェ</h3><p>無料のコーヒーと、まだ次の人生を決められない人たち。急がなくてもいい場所。</p></article>}{state.flags.includes('station')&&<article className="notebook-entry"><span>03 / ゆうの願い</span><h3>駅まで、走る</h3><p>電車に乗り遅れそうになって走ること。病室の窓から見ていた、誰かにとっては普通の日常。</p></article>}{state.index>=45&&<article className="notebook-entry"><span>04 / 大切なこと</span><h3>転生すると、記憶は消える</h3><p>希望票は手続きに使われる。でも、ここで交わした会話を覚えていることはできない。</p></article>}<p className="small-note">物語を読み進めると、記録が増えます。</p></>}
+   {modal==='save'&&<><h2>この場所を、残しておく。</h2><p>{slot?'既存のセーブを、現在の進行で上書きします。':'現在の会話と選択を、このブラウザに保存します。'}</p><p className="small-note">1スロット／同じブラウザ・同じURLで再開できます。<br/>サイトデータを削除するとセーブも消えます。</p><button className="solid" onClick={()=>{save();setModal(null)}}>{slot?'上書きして保存':'保存する'}</button></>}
+   {modal==='load'&&<><h2>あの会話の、つづきから。</h2><p>保存した進行に戻ります。保存していない進行は失われます。</p><p className="small-note">{slot&&new Date(slot.date).toLocaleString('ja-JP')}</p><button className="solid" onClick={load}>ロードする →</button></>}
+   {modal==='restart'&&<><h2>もう一度、白い部屋へ。</h2><p>現在の進行をリセットします。保存済みのデータは残ります。</p><button className="solid" onClick={restart}>最初から始める →</button></>}
+  </dialog>
+ </main>
 }
 
-export default App
+
+
