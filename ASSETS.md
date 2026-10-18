@@ -35,3 +35,7 @@ https://zeta-ai.io/ja/plots/dcece1d2-09fb-4188-b3e3-258880293375/profile
 
 ゆうv1・まひるv1・よるv1・ゆめv4を内蔵画像生成ツールで制作し、public/images/adv の各人物PNGへ反映。上表は初期素材の記録。かみさまは初期素材を維持。人物設定と参照元は CHARACTER_DESIGN.md、生成指示は docs/art を参照。
 
+
+## ゆうの座り絵（レビュー反映）
+
+public/images/adv/yu-seated.png に、ユーザー提供の d9bcb25c-a2b8-43f3-975d-ede2dee5db5a.png を再採用。足の不自由さに合わせて会話中も座位とする。生成した立位の yu.png は比較用に保持し、現行ゲームからは参照しない。

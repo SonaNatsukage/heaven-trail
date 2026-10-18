@@ -1,20 +1,53 @@
 import assert from 'node:assert/strict'
-import {initialGame,reduceGame,decodeSave,story,endings,contextAt} from '../src/story.js'
-const choiceCount=story.filter(n=>n.choices).length
-const seen=new Set()
-for(let route=0;route<3**choiceCount;route++){
- let s=initialGame(),digits=route,safety=0
- while(!s.ended){
-  assert.ok(++safety<150);assert.ok(story[s.index]);assert.ok(s.score>=0&&s.score<=100)
-  const n=story[s.index]
-  if(n.choices&&!s.reply){assert.equal(reduceGame(s,{type:'next'}),s);let i=digits%3;digits=Math.floor(digits/3);s=reduceGame(s,{type:'choose',index:i});assert.equal(reduceGame(s,{type:'choose',index:i}),s)}
-  else s=reduceGame(s,{type:'next'})
-  const saved=JSON.stringify({version:1,date:'2026-10-18T00:00:00.000Z',actions:s.actions})
-  assert.deepEqual(decodeSave(saved).state,s)
- }
- assert.equal(s.score,Math.max(0,Math.min(100,83+s.actions.filter(a=>a.type==='choose').reduce((sum,a,i)=>sum+story.filter(n=>n.choices)[i].choices[a.index].delta,0))));assert.ok(s.history.every(h=>h.who!=='system'));assert.ok(endings[s.ending]);seen.add(s.ending);assert.equal(s.flags.length,choiceCount);assert.equal(reduceGame(s,{type:'next'}),s)
+import {initialGame,reduceGame,decodeSave,encodeSave,story,endings,contextAt,currentLine,indexOf} from '../src/story.js'
+import * as legacy from '../src/story-v1.js'
+const visited=new Set(),seen=new Set();let paths=0,steps=0
+function walk(state,depth=0){
+  assert.ok(depth<250,'route must terminate')
+  const node=story[state.index];assert.ok(node);visited.add(node.id)
+  assert.ok(Number.isFinite(state.score)&&state.score>=0)
+  assert.ok(currentLine(state).who);assert.equal(typeof currentLine(state).text,'string')
+  assert.deepEqual(decodeSave(encodeSave(state)).state,state)
+  assert.ok(state.history.every(h=>h.who!=='system'))
+  steps++
+  if(state.ended){assert.ok(endings[state.ending]);seen.add(state.ending);paths++;assert.equal(reduceGame(state,{type:'next'}),state);return}
+  if(node.choices&&!state.reply){
+    assert.equal(reduceGame(state,{type:'next'}),state)
+    assert.equal(reduceGame(state,{type:'choose',index:99}),state)
+    node.choices.forEach((c,index)=>{
+      const next=reduceGame(state,{type:'choose',index})
+      assert.equal(next.score,Math.max(0,state.score+(c.delta||0)))
+      if(c.spoken){assert.equal(currentLine(next).who,'self');assert.equal(currentLine(next).text,c.text)}
+      walk(next,depth+1)
+    })
+  }else walk(reduceGame(state,{type:'next'}),depth+1)
 }
-assert.equal(seen.size,3)
-for(const bad of ['{}','null','{"version":1,"date":"x","actions":[{"type":"choose","index":0}]}','{"version":1,"date":"x","actions":[{"type":"next"},{"type":"choose","index":99}]}'])assert.throws(()=>decodeSave(bad))
-assert.equal(contextAt(0).portrait,'god');assert.equal(contextAt(15).scene,'cafe')
-console.log(`PASS: ${3**choiceCount} routes, save/load at each step, all 3 endings, double-choice guard, score bounds, invalid saves.`)
+walk(initialGame())
+assert.equal(seen.size,Object.keys(endings).length)
+assert.equal(visited.size,story.length,'all scenes reachable')
+for(const n of story){
+  assert.ok(contextAt(indexOf(n.id)).scene)
+  assert.ok(!n.text.includes('にへら'))
+  for(const c of n.choices||[])assert.ok(!c.reply||Array.isArray(c.reply))
+}
+function route(choices){let s=initialGame();while(!s.ended){const n=story[s.index];s=reduceGame(s,n.choices&&!s.reply?{type:'choose',index:choices[n.id]??0}:{type:'next'})}return s}
+const stay=route({b14:1,'receptionStay-7':0})
+assert.ok(!stay.flags.includes('cafe'),'staying at reception must not discover cafe')
+const yu=route({})
+assert.equal(yu.ending,'yu');assert.ok(yu.flags.includes('yumeBalance'))
+assert.ok(yu.history.some(h=>h.who==='self'&&h.text.includes('それは次の人生')))
+assert.ok(yu.history.some(h=>h.who==='yume'&&h.text==='一万くらい。'))
+// Every old save position and old ending remains loadable, including mid-response.
+let old=legacy.initialGame()
+for(let i=0;i<100&&!old.ended;i++){
+  const raw=JSON.stringify({version:1,date:'2026-10-18T00:00:00.000Z',actions:old.actions})
+  const migrated=decodeSave(raw).state
+  assert.equal(migrated.score,old.score)
+  assert.deepEqual(decodeSave(encodeSave(migrated)).state,migrated)
+  assert.ok(currentLine(migrated).text)
+  const n=legacy.story[old.index]
+  old=legacy.reduceGame(old,n.choices&&!old.reply?{type:'choose',index:0}:{type:'next'})
+}
+assert.equal(story[decodeSave(JSON.stringify({version:1,date:'2026-10-18',actions:old.actions})).state.index].id,'cafeHub')
+for(const bad of ['null','{}',JSON.stringify({version:2,date:'2026-10-18',actions:[{type:'choose',index:0}]}),JSON.stringify({version:2,date:'bad',actions:[]})])assert.throws(()=>decodeSave(bad))
+console.log(`PASS: ${paths} routes, ${visited.size} scenes, ${steps} save round-trips, ${seen.size} endings, speaker attribution and legacy migration.`)
