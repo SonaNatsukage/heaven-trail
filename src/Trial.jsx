@@ -11,7 +11,7 @@ const VOICE_OPTIONS='heaven-voice-volume-v1'
 function readVolume(){try{const n=Number(localStorage.getItem(VOICE_OPTIONS)??.85);return Number.isFinite(n)&&n>=0&&n<=1?n:.85}catch{return .85}}
 export default function Trial({entry,onExit,options}){
  const [state,setState]=useState(()=>{const old=readTrial();return old?decodeTrial(old.latest):initialTrial(entry)}),[panel,setPanel]=useState(null),[selected,setSelected]=useState(false),[tool,setTool]=useState(null),[message,setMessage]=useState(''),[volume,setVolume]=useState(readVolume)
- const n=trialNode(state),line=trialLine(state),h=hearings[n.hearing],speaker=people[line.who]?line.who:(n.hearing?hearings[n.hearing].who:'god'),file=voiced.has(line.id)&&voiceManifest[line.id]?`/audio/trial/${line.id}.wav`:null,dialog=useRef(null),saveFailed=useRef(false)
+ const n=trialNode(state),line=trialLine(state),h=hearings[n.hearing],speaker=people[line.who]?line.who:(n.hearing?hearings[n.hearing].who:'god'),file=voiceManifest[line.id]?.url||null,dialog=useRef(null),saveFailed=useRef(false)
  function dispatch(action){voice.stop();sound.effect(action.type==='evidence'?'paper':'tap');setSelected(false);setTool(null);setMessage('');setState(s=>reduceTrial(s,action))}
  async function replay(){if(!await sound.unlock()){setMessage('音声を開始できませんでした。');return}await sound.play('quiet');if(!await voice.play(file))setMessage('音声を再生できませんでした。本文はそのまま読めます。')}
  useEffect(()=>{voice.settings(volume,options.muted);try{localStorage.setItem(VOICE_OPTIONS,String(volume))}catch{}},[volume,options.muted])

@@ -34,7 +34,7 @@ for(const line of voicedLines){
  const wav=Buffer.from(clip.data,'base64')
  if(wav.toString('ascii',0,4)!=='RIFF'||wav.toString('ascii',8,12)!=='WAVE')throw Error('Expected WAV')
  await writeFile(new URL(line.id+'.wav',output),wav)
- manifest[line.id]={hash,voice:character.voice,model:config.model}
+ manifest[line.id]={hash,voice:character.voice,model:config.model,url:'/audio/trial/'+line.id+'.wav'}
  await writeFile(new URL('manifest.json',output),JSON.stringify(manifest,null,2)+'\n')
  console.log('Saved '+line.id)
 }
