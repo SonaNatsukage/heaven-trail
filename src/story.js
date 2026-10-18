@@ -95,7 +95,7 @@ export function reduceGame(state, action){
   if(action.type==='choose' && node.choices && !state.reply){
     const c=node.choices[action.index];if(!c)return state
     const score=Math.max(0,Math.min(100,state.score+c.delta))
-    next={...state,score,reply:{...c,delta:score-state.score},ending:c.ending||null,flags:[...state.flags,c.flag],history:[...state.history,{who:node.who,text:node.text},{who:'self',text:c.text},{who:'system',text:`徳 ${score-state.score>=0?'+':''}${score-state.score} ／ ${c.reason}`},{who:'narrator',text:c.reply}]}
+    next={...state,score,reply:{...c,delta:score-state.score},ending:c.ending||null,flags:[...state.flags,c.flag],history:[...state.history,{who:node.who,text:node.text},{who:'self',text:c.text},{who:node.who==='god'?'god':'narrator',text:c.reply}]}
   }else if(action.type==='next'){
     if(node.choices && !state.reply)return state
     if(state.reply) next={...state,reply:null,ended:!!state.ending,index:state.ending?state.index:state.index+1}
