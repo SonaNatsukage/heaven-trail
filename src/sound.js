@@ -5,12 +5,14 @@ export class Sound {
     try{this.context ||= new (window.AudioContext||window.webkitAudioContext)();await this.context.resume();this.enabled=true;this.error=false;return true}catch{this.error=true;return false}
   }
   generation=0
+  ducked=false
+  duck(value){this.ducked=value;for(const a of this.active)a.volume=this.bgm*(value?.25:1)}
   async play(scene){
     if(!this.enabled || (scene===this.scene && this.current))return
     this.pause()
     const generation=this.generation, audio=new Audio(tracks[scene])
     this.scene=scene;this.current=audio;this.active.add(audio)
-    audio.loop=true;audio.volume=this.bgm;audio.muted=this.muted
+    audio.loop=true;audio.volume=this.bgm*(this.ducked?.25:1);audio.muted=this.muted
     try{
       await audio.play()
       if(generation!==this.generation){audio.pause();return}
@@ -20,7 +22,7 @@ export class Sound {
       if(generation===this.generation){this.error=true;this.current=null;this.scene=null}
     }
   }
-  settings(bgm,se,muted){this.bgm=bgm;this.se=se;this.muted=muted;for(const a of this.active){a.muted=muted;a.volume=bgm}}
+  settings(bgm,se,muted){this.bgm=bgm;this.se=se;this.muted=muted;for(const a of this.active){a.muted=muted;a.volume=bgm*(this.ducked?.25:1)}}
   effect(kind){
     if(!this.enabled||this.muted||!this.context||this.context.state!=='running')return
     const ctx=this.context,now=ctx.currentTime,volume=this.se*.15

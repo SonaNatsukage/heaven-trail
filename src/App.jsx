@@ -2,11 +2,13 @@ import { useEffect, useRef, useState, useSyncExternalStore, useMemo } from 'reac
 import { people, story, endings, initialGame, contextAt, reduceGame, decodeSave, encodeSave, currentLine, names } from './story.js'
 import { subscribeArchive, archiveSnapshot, checkpoint, latestSave } from './checkpoints.js'
 import { sound } from './sound.js'
+import Trial from './Trial.jsx'
 import './App.css'
 const SLOT='heaven-adv-save-v1', OPTIONS='heaven-adv-options-v1'
 function readOptions(){try{const s=JSON.parse(localStorage.getItem(OPTIONS));if(s&&[s.bgm,s.se].every(n=>typeof n==='number'&&n>=0&&n<=1)&&typeof s.muted==='boolean')return s}catch{}return {bgm:.42,se:.45,muted:false}}
 function readSlot(){try{const raw=localStorage.getItem(SLOT);return raw?decodeSave(raw):null}catch{return null}}
 export default function App(){
+ const [showTrial,setShowTrial]=useState(false)
  const [state,setState]=useState(initialGame),[started,setStarted]=useState(false),[modal,setModal]=useState(null),[notice,setNotice]=useState(''),[options,setOptions]=useState(readOptions),[slot,setSlot]=useState(readSlot),[reveal,setReveal]=useState({text:"",count:0}),[audioStatus,setAudioStatus]=useState('音声オフ')
  const archive=useSyncExternalStore(subscribeArchive,archiveSnapshot)
  const availableSave=useMemo(()=>{const auto=archive.latest?decodeSave(archive.latest):null;return auto&&(!slot||Date.parse(auto.date)>=Date.parse(slot.date))?auto:slot},[archive,slot])
@@ -17,7 +19,7 @@ export default function App(){
  function tell(message){setNotice(message);clearTimeout(noticeTimer.current);noticeTimer.current=setTimeout(()=>setNotice(''),4000)}
  useEffect(()=>{const t=setInterval(()=>setReveal(n=>n.text===text&&n.count===text.length?n:{text,count:Math.min(text.length,n.text===text?n.count+2:2)}),24);return()=>clearInterval(t)},[text])
  useEffect(()=>{sound.settings(options.bgm,options.se,options.muted);try{localStorage.setItem(OPTIONS,JSON.stringify(options))}catch{}},[options])
- useEffect(()=>{if(!started)return;const sync=()=>{if(document.hidden)sound.pause();else sound.play(ctx.scene)};sync();document.addEventListener('visibilitychange',sync);window.addEventListener('pagehide',sound.pauseBound ||= ()=>sound.pause());return()=>{document.removeEventListener('visibilitychange',sync);window.removeEventListener('pagehide',sound.pauseBound);sound.pause()}},[started,ctx.scene])
+ useEffect(()=>{if(!started||showTrial)return;const sync=()=>{if(document.hidden)sound.pause();else sound.play(ctx.scene)};sync();document.addEventListener('visibilitychange',sync);window.addEventListener('pagehide',sound.pauseBound ||= ()=>sound.pause());return()=>{document.removeEventListener('visibilitychange',sync);window.removeEventListener('pagehide',sound.pauseBound);sound.pause()}},[started,ctx.scene,showTrial])
  useEffect(()=>{if(started&&node.sfx&&!state.reply)sound.effect(node.sfx)},[started,state.index,state.reply,node.sfx])
  useEffect(()=>{if(!started)return;try{checkpoint(state)}catch{if(!autoError.current){autoError.current=true;tell('自動保存できませんでした。ブラウザの保存容量をご確認ください。')}}},[state,started])
  useEffect(()=>{const t=setInterval(()=>setAudioStatus(sound.status()),400);return()=>{clearInterval(t);clearTimeout(noticeTimer.current);sound.pause()}},[])
@@ -29,8 +31,11 @@ export default function App(){
  function save(){try{const data=encodeSave(state);localStorage.setItem(SLOT,data);setSlot(decodeSave(data));tell('この場所を保存しました。');sound.effect('paper')}catch{tell('保存できませんでした。ブラウザの保存設定をご確認ください。')}}
  async function load(){const saved=latestSave(readSlot());if(!saved){tell('有効なセーブデータがありません。');return}if(!started||sound.enabled)await sound.unlock();setState(saved.state);setSlot(saved);setStarted(true);setModal(null);tell(saved.migrated?'旧版のセーブを引き継ぎました。':'保存した場所から再開しました。')}
  function restart(){setState(initialGame());setModal(null);setStarted(true);tell('第0話の最初に戻りました。セーブデータは残っています。')}
+ async function enterTrial(){await sound.unlock();setShowTrial(true)}
+ if(showTrial)return <Trial entry={{score:state.score,cafe:state.flags.includes('cafe')}} options={options} onExit={()=>setShowTrial(false)}/>
  return <main className={`adv ${ctx.scene} ${!started?'on-title':''}`}>
   <header className="topbar"><div className="wordmark">HEAVEN <span>TRAIL</span></div><button className="icon-button" onClick={()=>setModal('settings')} aria-label="音量と設定">♫ <span>{audioStatus}</span></button></header>
+  {(!started||state.ended)&&<div className="episode-entry"><button onClick={enterTrial}>第2話・その親切は、誰のもの →</button></div>}
   {!started?<section className="title-screen"><div className="title-copy"><h1>来世が決まるまで、<br/>ここにいて。</h1><p className="title-sub">忘れてしまう、その前に。<br/>もう一杯だけ、話しませんか。</p><div className="title-rule"/><p className="episode">第0–1話 <span>冷めないコーヒー</span></p><button className="solid" onClick={()=>start(true)}>はじめる <span>→</span></button><div className="title-secondary"><button onClick={()=>start(false)}>音なしで始める</button><button disabled={!availableSave} onClick={load}>つづきから</button></div></div><div className="title-art"><div className="orb"/><img src="/images/adv/god.png" alt="白い部屋で微笑むかみさま"/></div></section>:<>
    <section className="scene-stage" aria-label="物語の場面"><div className="window-lines" aria-hidden="true"/><div className="location"><h1>{sceneLabel}</h1></div><div className="portrait" key={portrait}><img src={person.image} alt={person.name} className={portrait==='god'?'god-image':portrait==='yu'?'yu-seated':''}/></div></section>
    {state.ended?<section className="dialogue-box ending-box"><div><span className="kicker">第1話・了</span><h2>{ending.title}</h2><p>{ending.text}</p><p className="virtue-result">今回の徳　{state.score}</p></div><div className="ending-side"><p>{ending.last}</p><button className="solid" onClick={()=>setModal('restart')}>もう一度、最初から →</button></div></section>:<section className={`dialogue-box ${node.choices&&!state.reply?'has-choices':''}`} aria-label="会話"><div className="dialogue-main"><div className="speaker"><span className="speaker-dash"/>{names[line.who]}</div><p className="dialogue-text" aria-label={text}>{text.slice(0,shown)}{!complete&&<span className="caret">▎</span>}</p>{!complete?<button className="read-next" onClick={()=>setShown(text.length)}>全文を表示 <span>↓</span></button>:(!node.choices||state.reply)?<button className="read-next" onClick={advance}>{node.ending&&!state.reply?'この話の結びへ':'次へ'} <span>→</span></button>:null}</div>{node.choices&&!state.reply&&complete&&<div className="choice-list">{node.choices.map((c,i)=><button key={c.text} onClick={()=>choose(i)}><span>0{i+1}</span>{c.text}<b>↗</b></button>)}</div>}</section>}

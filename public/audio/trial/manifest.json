@@ -1,0 +1,12 @@
+{
+  "intro-yu": {
+    "hash": "33f10da036835ecb765043c8fb6cef8389e26f65435f66db55aaee12f2556161",
+    "voice": "Achernar",
+    "model": "gemini-3.8-flash-tts"
+  },
+  "incident-yu": {
+    "hash": "20d18fd8a6c91b225f27f54c20f13bb29a56c363107c17c4dedf38909c51558a",
+    "voice": "Achernar",
+    "model": "gemini-3.8-flash-tts"
+  }
+}

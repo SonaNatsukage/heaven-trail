@@ -40,3 +40,5 @@ https://zeta-ai.io/ja/plots/dcece1d2-09fb-4188-b3e3-258880293375/profile
 
 public/images/adv/yu-seated.png に、ユーザー提供の d9bcb25c-a2b8-43f3-975d-ede2dee5db5a.png を再採用。足の不自由さに合わせて会話中も座位とする。生成した立位の yu.png は比較用に保持し、現行ゲームからは参照しない。
 `public/images/adv/yu-seated-v2.png`: 元のゆうの座り絵を image_gen で透過・右端補完。生成指示は docs/art/yu-seated-v2-prompt.txt。元画像と旧立ち絵は保存。
+
+`public/audio/trial/*.wav`: Gemini TTSによるAI生成キャラクターボイス。ゆう=Achernar、まひる=Sulafat、ゆめ=Kore。台詞は `src/trial-data.js`、声の設計は `docs/voice-audition.json`、生成処理は `scripts/generate-trial-voices.mjs`、生成済みのモデル名・声名・ハッシュは同フォルダーの `manifest.json`。現時点で2/23本、残りは無料枠回復待ち。ゲーム内音声設定にAI生成の表記あり。
