@@ -1,6 +1,7 @@
 const tracks={reception:'/audio/reception.wav',cafe:'/audio/cafe.wav',quiet:'/audio/quiet.wav'}
 export class Sound {
   context=null; current=null; active=new Set(); scene=null; bgm=.42; se=.45; muted=false; enabled=false; error=false; timer=null
+  disable(){this.pause();this.enabled=false}
   async unlock(){
     try{this.context ||= new (window.AudioContext||window.webkitAudioContext)();await this.context.resume();this.enabled=true;this.error=false;return true}catch{this.error=true;return false}
   }
@@ -40,4 +41,5 @@ export class Sound {
   status(){return !this.enabled?'音声オフ':this.error?'音声を再開してください':this.muted?'ミュート':this.current&&!this.current.paused?'BGM 再生中':'音声待機中'}
 }
 export const sound = new Sound()
+
 

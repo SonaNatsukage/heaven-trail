@@ -12,10 +12,10 @@ export const leads=[
  {id:'terminal',title:'端末で規約と経路を読む',who:'system',text:'規約R-8と処理A-204を開示します。取引状態：正常。補助状態：出発待ち。異議申立中の再精算が可能です。',evidence:['terms','route']},
 ]
 export const hearings={
- denial:{title:'受け取っていない？',who:'yume',text:'ゆうから徳なんて、何も受け取っていないよ。',term:'何も受け取っていない',evidence:'transfer',success:'09:10のT-17。受領者はゆめ、金額は2。受領そのものは否定できない。',hint:'ゆめの残高の大きさではなく、実際の譲渡先が記された控えを確認しよう。',next:'admit'},
- culprit:{title:'嘘と犯人は同じか',who:'mahiru',text:'隠していたなら……減った100も、ゆめのところに入ったの？',term:'100も、ゆめのところ',evidence:'receipt',success:'受領は2だけ。100の受領がない以上、先の嘘だけで今回の引落しを説明することはできない。',hint:'受領記録の対象時刻と、今回消えた金額を比べよう。',next:'cleared'},
+ denial:{title:'受け取っていない？',who:'yume',text:'ゆうから徳なんて、何も受け取っていないよ。',term:'何も受け取っていない',evidence:'transfer',alternatives:['receipt'],success:'09:10のT-17。受領者はゆめ、金額は2。受領そのものは否定できない。',hint:'ゆめの残高の大きさではなく、実際の譲渡先が記された控えを確認しよう。',next:'admit'},
+ culprit:{title:'嘘と犯人は同じか',who:'mahiru',text:'隠していたなら……減った100も、ゆめのところに入ったの？',term:'100も、ゆめのところ',evidence:'receipt',alternatives:['route'],success:'受領は2だけ。100の受領がない以上、先の嘘だけで今回の引落しを説明することはできない。',hint:'受領記録の対象時刻と、今回消えた金額を比べよう。',next:'cleared'},
  contract:{title:'何を引き受けたか',who:'self',text:'ゆうが引き受けたのは、歩行の20ポイント。その額を超えるはずがない。',term:'歩行の20ポイント',evidence:'consent',success:'控えは「差額を負担」。20は上限ではなく、上限欄は未設定だった。僕も要約を読み違えていた。',hint:'承認した原文には何と書かれている？ 金額の上限欄も見よう。',next:'formula'},
- normal:{title:'正常なら再確認はいらない？',who:'system',text:'本人了承済み。取引状態は正常です。条件の再確認は不要です。',term:'条件の再確認は不要',evidence:'route',success:'経路は承認後に持続走行へ変わった。再確認は省略されているが、未実施なら再精算できる。「正常」だけで照会を終わらせられない。',hint:'承認した時刻の後に、何が変わった？ 経路記録を読もう。',next:'meaning'},
+ normal:{title:'正常なら再確認はいらない？',who:'system',text:'本人了承済み。取引状態は正常です。条件の再確認は不要です。',term:'条件の再確認は不要',evidence:'route',alternatives:['terms'],success:'経路は承認後に持続走行へ変わった。再確認は省略されているが、未実施なら再精算できる。「正常」だけで照会を終わらせられない。',hint:'承認した時刻の後に、何が変わった？ 経路記録を読もう。',next:'meaning'},
 }
 const nodes=[]
 function sequence(id,lines,next,scene='cafe',episode=1){lines.forEach(([who,text],i)=>nodes.push({id:i?`${id}-${i}`:id,who,text,next:i<lines.length-1?`${id}-${i+1}`:next,scene,episode}))}
@@ -26,7 +26,7 @@ sequence('wake',[
  ['god','お目覚めですね。天国の転生受付へようこそ。前の人生からお持ちの徳は83。確認欄に丸をお願いします。'],
  ['self','確認したくない場合は？'],['god','お気持ちの欄もございます。……うふふ。先に、ここで何をしたいか伺いましょう。'],
 ],'arrival','reception',0)
-choice('arrival','self','白い部屋の向こうから、カップの音が聞こえた。',[
+choice('arrival','narrator','白い部屋の向こうから、カップの音が聞こえた。',[
  c('みんなと話してみたい。','meet'),c('天国の仕組みを知りたい。','rules'),c('ここがどこなのか確かめたい。','place'),
 ],{scene:'reception',episode:0})
 sequence('meet',[['god','隣はカフェです。基本のコーヒーは無料。皆さん、まだ次の人生を決めていらっしゃいません。'],['self','なら、僕にも座れる席がありそうだ。']],'tutorial','reception',0)
@@ -48,7 +48,7 @@ sequence('cafe',[
  ['yu','駅。電車に乗り遅れそうになって走るの。病室の窓から、よく見てた。'],
  ['yu','でも、間に合っても乗らないかも。次でいいやって。走れなくて諦めるんじゃなくて、自分で見送ってみたい。'],
 ],'wish','cafe',0)
-choice('wish','self','ゆうは、紙の端を指で押さえている。',[
+choice('wish','narrator','ゆうは、紙の端を指で押さえている。',[
  c('そのときは、一緒に次の電車を待とう。','wish-wait'),c('まずは、ここで一歩ずつ試してみよう。','wish-step'),
 ],{episode:0})
 sequence('wish-wait',[['yu','ふふ。頑張って走ったのに、二人とも乗らないんだ。……そういうの、いいね。']],'yume','cafe',0)
@@ -71,7 +71,7 @@ sequence('morning',[
  ['yu','まだ出発しないよ。紐だけ、練習。'],['mahiru','カップは置いておいて。帰ってきたら、話を聞かせて。'],
  ['yoru','誰かを待つコーヒーは、少しおいしいの。'],
 ],'daily')
-choice('daily','self','ゆうの手元には、折り畳んだ二枚の控えがある。',[
+choice('daily','narrator','ゆうの手元には、折り畳んだ二枚の控えがある。',[
  c('準備はどう？','daily-yu'),c('今朝も、窓口は混んでいた？','daily-yoru'),
 ])
 sequence('daily-yu',[['yu','ゆめに、ちょっと相談したの。それから、困ってた人の手続きも手伝えた。今日は、少しいい日かも。']],'incident')
@@ -94,7 +94,7 @@ sequence('admit',[
  ['yu','その相談は、私が内緒にしてって頼んだの。金額のことは話していい。でも、中身は……。'],
  ['yume','秘密を守るなら、言えないと言えばよかった。受け取ってないとまで言ったのは、私の間違い。'],
 ],'privacy','quiet')
-choice('privacy','self','事件の金額と時刻は確認できた。相談の中身まで、公の記録に残す必要があるだろうか。',[
+choice('privacy','narrator','事件の金額と時刻は確認できた。相談の中身まで、公の記録に残す必要があるだろうか。',[
  c('ゆうに、公開してよい範囲だけ聞く。','private',0,{flag:'protected'}),
  c('それでも、相談内容まで公開するよう求める。','exposed',-8,{reason:'非必須の私的情報の公開要求',flag:'exposed'}),
 ],{scene:'quiet'})
@@ -108,7 +108,7 @@ choice('calculate','self','確定したのは持続走行。利用者には基�
  c('ゆめの残高から100を引いた。','normal',0,{wrong:'受領記録にその取引はない。R-8とA-204の金額を使おう。'}),
 ],{scene:'quiet'})
 sequence('meaning',[['god','計算は規約に一致しています。ただ、形式上の承認と、変更後の負担を理解していたかは別に確認する必要があります。']],'interpret','quiet')
-choice('interpret','self','「正常」が保証していたのは何だったのか。',[
+choice('interpret','narrator','「正常」が保証していたのは何だったのか。',[
  c('計算と承認形式。本人が理解したかまでは保証しない。','truth',5,{reason:'事実関係と訂正根拠の記録'}),
  c('正常なら、ゆうが心から望んだ証明になる。','truth',0,{wrong:'R-8の「正常」の定義を読み直そう。気持ちは検査項目に含まれていない。'}),
  c('天国の記録はすべて嘘だ。','truth',0,{wrong:'金額の計算は一致している。本件の記録から制度全体を嘘とは断定できない。'}),
@@ -123,7 +123,7 @@ sequence('truth',[
  ['system','A-204 再精算完了。差額負担解除。返還100。ゆう残高148。走行体験予約：復旧。'],
  ['self','数字は戻った。でも、この要約のままなら、また誰かが同じ読み違いをする。'],
 ],'resolution','quiet')
-choice('resolution','self','申立書の最後に、何を残そう。',[
+choice('resolution','narrator','申立書の最後に、何を残そう。',[
  c('条件変更時の再確認と、上限入力の改善を申し立てる。','reform',0,{flag:'reform'}),
  c('今回は個別訂正として閉じ、ゆうの出発を見届ける。','individual',0,{flag:'individual'}),
 ],{scene:'quiet'})
@@ -139,3 +139,4 @@ sequence('closing',[
 nodes.push({id:'end',who:'narrator',text:'第1話　走れない天国　了',scene:'quiet',episode:1,ending:true})
 export const scenario=Object.fromEntries(nodes.map(n=>[n.id,n]))
 export const scenarioVersion=1
+

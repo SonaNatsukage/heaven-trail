@@ -16,6 +16,7 @@ function run({arrival,tutorial,wish,daily,privacy,resolution,order,accuse}){
   else if(n.investigation){assert.equal(act(s,{type:'debate'}),s);for(const id of order){s=act(s,{type:'investigate',id});assert.ok(s.detail);s=act(s,{type:'dismiss'});assert.equal(act(s,{type:'investigate',id}),s)}a={type:'debate'}}
   else if(n.hearing){
    if(accuse&&!s.penalties.length){const before=s.score;s=act(s,{type:'accuse'});assert.equal(s.score,before-3);s=act(s,{type:'dismiss'});assert.equal(act(s,{type:'accuse'}),s)}
+   for(const id of hearings[n.hearing].alternatives||[]){const alternate=act(s,{type:'present',id});assert.equal(alternate.node,hearings[n.hearing].next);assert.ok(alternate.detail.success)}
    const wrong=Object.keys(evidence).find(id=>id!==hearings[n.hearing].evidence),before=s.score
    s=act(s,{type:'present',id:wrong});assert.ok(s.detail);assert.equal(s.score,before);s=act(s,{type:'dismiss'});a={type:'present',id:hearings[n.hearing].evidence}
   }else if(n.choices){
@@ -32,4 +33,5 @@ for(let arrival=0;arrival<3;arrival++)for(let tutorial=0;tutorial<2;tutorial++)f
 const mem={data:new Map(),getItem(k){return this.data.get(k)},setItem(k,v){this.data.set(k,v)}}
 let s=initial();while(s.node!=='arrival')s=act(s,{type:'next'});checkpoint(s,mem);const raw=read(mem).branches[0].raw;s=act(s,{type:'choose',index:0});checkpoint(s,mem);assert.deepEqual(decode(raw).score,83);assert.ok(read(mem).branches.length);assert.throws(()=>decode('{"version":99,"actions":[]}'));assert.throws(()=>decode('{"version":1,"actions":[{"type":"choose","at":"wake","index":0}]}'));mem.setItem(SAVE_KEY,'broken');assert.equal(read(mem),null);assert.throws(()=>checkpoint(initial(),{getItem(){return null},setItem(){throw Error('quota')}}))
 console.log(`PASS ${endings} complete routes; ${count} transitions/save roundtrips; all investigation orders, mistakes, one-time penalties, stale clicks and branch restoration`)
+
 
