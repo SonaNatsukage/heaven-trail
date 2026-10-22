@@ -1,0 +1,62 @@
+const line=(id,who,text,extra={})=>({id,who,text,...extra})
+export const evidence=[
+ {id:'original',title:'元の希望票',text:'「走れる身体」を希望。署名欄は空白。ゆうが手元に保管していた控え。'},
+ {id:'revised',title:'修正後の希望票',text:'「走れる身体」の欄が削除され、「次回転生へ進む」に変更。受付欄には「本人了承・支援者まひる」。'},
+ {id:'ledger',title:'受付の処理記録',text:'希望条件の見直しを受理。支援完了として、まひるに徳を加算。本人の発言原文は記載されていない。'},
+ {id:'mahiru',title:'まひるの証言',text:'「本人も了承していた」。何と尋ねたかは、まだ確認していない。'},
+ {id:'yu',title:'ゆうの証言',text:'希望を取り下げた覚えはない。当時の言葉を、本人に確認する必要がある。'},
+]
+export const hearings={
+ request:{title:'何を頼んだか',term:'決められない',who:'yu',text:'今日は、走る条件まで決められない。そう言ったの。',ask:line('ask-yu','yu','今日は決められないって、待ってほしかっただけ。走りたくなくなったわけじゃないよ。'),evidence:'original',note:'「決められない」は保留の意思。走る希望の取り下げではない。',options:['希望そのものを取り消した。','今回は決めず、希望を保留した。','まひるに全部決めてもらった。'],correct:1,next:'after-request'},
+ consent:{title:'何に同意したか',term:'うん',who:'mahiru',text:'ちゃんと聞いたよ。ゆうも、うんって言った。',ask:line('ask-mahiru','mahiru','書き直すところまで、手伝っていい、って聞いた。……何を消すかは、聞いてなかった。'),evidence:'mahiru',note:'うなずいたのは書き直しの補助への返事。変更内容の了承とは区別が必要。',options:['うなずけば、どんな修正も了承になる。','まひるは最初から騙すつもりだった。','手伝いへの同意と、内容への同意は別だ。'],correct:2,next:'after-consent'},
+ reward:{title:'何に徳が付いたか',term:'成功',who:'yume',text:'でも、処理は成功してる。徳も入った。成功の条件が、間違ってたんじゃない？',ask:line('ask-yume','yume','この記録が保証してるのは、手続きが終わったこと。ゆうが望んだことかどうかは、別に調べないと。'),evidence:'ledger',note:'徳の加算は処理完了に対応している。本人の満足や同意を証明するものではない。',options:['徳が付いた以上、ゆうも喜んだはずだ。','処理の完了と、本人の願いは別に確かめる。','徳を持つ人の証言を優先する。'],correct:1,next:'after-reward'},
+}
+export const trialNodes=[
+ line('intro','narrator','翌日。受付から、希望票の照会に立ち会ってほしいと呼び止められた。'),
+ line('intro-god','god','ゆうさんの希望変更について、記録とお話が食い違っています。転生手続きは止めてあります。'),
+ line('intro-known','self','昨日は、走りたいって話していたのに。',{onlyCafe:true}),
+ line('intro-new','self','まず、あなたが望んでいたことを聞かせてください。',{onlyReception:true}),
+ line('intro-yu','yu','ゆうです。次は走れる身体が欲しい。でも徳が足りなくて、昨日は決めずに持ち帰ったの。'),
+ line('incident','narrator','今朝、まひるが書き直しを手伝い、希望票を受付へ届けたという。ゆうは椅子に座ったまま二枚の紙を並べた。一枚からは「走れる身体」の項目が消えている。'),
+ line('incident-yu','yu','これ、私の希望票だよね。どうして、走りたいって書いたところがないの？'),
+ line('incident-mahiru','mahiru','まひるです。私が書き直すのを手伝ったの。でも、諦めさせるつもりなんてなかった。'),
+ line('incident-yume','yume','ゆめ。私も記録を見ていい？ 誰が悪いかより、何が起きたかを先に知りたい。'),
+ line('rules','god','書類と証言を五つ、お手元に。気になる言葉を選び、尋ねてください。結論を急ぐ必要はありません。'),
+ line('request','yu',hearings.request.text,{hearing:'request'}),
+ line('after-request','self','「今日は決めない」が、「その条件を選ばない」に変わっている。最初の食い違いはそこだ。'),
+ line('response-request','yu','うん。まだ欲しいから、決められなかったの。'),
+ line('before-consent','mahiru','安心させてあげたくて。書き終われば、少し楽になると思った。'),
+ line('consent','mahiru',hearings.consent.text,{hearing:'consent'}),
+ line('after-consent','self','手を貸していいかは聞いた。でも、何を変えていいかは聞いていない。'),
+ line('response-consent','mahiru','私、待つより何かしたかったんだ。ゆうのためって言いながら、自分が落ち着きたかった。'),
+ line('response-yu','yu','手伝ってくれたのは嬉しかった。でも、消す前に聞いてほしかった。'),
+ line('reward','yume',hearings.reward.text,{hearing:'reward'}),
+ line('after-reward','god','加算の根拠は支援完了です。同意の確認が不足していたなら、記録の訂正が必要です。'),
+ line('response-reward','yume','点数が付いたから正しい、で終わらせると、同じことがまた起きるよ。'),
+ line('conduct','narrator','まひるが言いかけて、口を閉じた。記録を閉じる前に、どうする。',{choices:[
+  {text:'言いにくいことも、記録に残そう。',target:'conduct-listen',delta:1},
+  {text:'言い分はもう十分だ。先に結論を出そう。',target:'conduct-rush',delta:-1},
+ ]}),
+ line('conduct-listen','mahiru','書き終わったらありがとうって、言ってほしかったのかもしれない。……それも、残して。',{next:'decision-intro'}),
+ line('conduct-rush','yu','待って。私も、まだ聞いていたい。私の紙のことだから。',{next:'decision-intro'}),
+ line('decision-intro','god','希望票の訂正と、支援の評価は分けて扱えます。処理方針を提案してください。'),
+ line('decision','self','どの方針でも、最後はゆうに確かめる。',{choices:[
+  {text:'希望票を戻し、支援完了の加算を取り消す。',target:'cancel',delta:0},
+  {text:'希望票を戻し、支援の内容を分けて再評価する。',target:'review',delta:0},
+  {text:'判断を保留し、ゆうの希望を改めて聞く。',target:'hold',delta:0},
+ ]}),
+ line('cancel','god','支援は未完了として、完了分の加算を取り消す案ですね。希望票は変更前へ戻します。'),
+ line('cancel-mahiru','mahiru','分かった。助けたつもりだったことまで、消えた気がして……少し、つらい。でも、確認しなかったのは本当だから。'),
+ line('cancel-yu','yu','それでお願いします。走りたいって書いた紙を、返してください。',{next:'cancel-end'}),
+ line('cancel-end','narrator','ゆうの希望は戻った。まひるは修正された控えを、しばらく見つめていた。',{ending:'cancel'}),
+ line('review','god','書く補助と、希望変更の処理を分けて再評価する案ですね。加算は審査中とし、希望票を戻します。'),
+ line('review-yu','yu','それがいい。手伝ってもらったことまで、なかったことにはしたくない。でも、走りたいのも本当。'),
+ line('review-mahiru','mahiru','うん。次は、何をしてほしいかを先に聞く。何もしないでって言われても、待つ。'),
+ line('review-end','narrator','二つの行為に、別々の欄が用意された。一つの点数では収まらなかった話が、紙の上にも残った。',{ending:'review'}),
+ line('hold','god','記録は異議申立中として凍結します。希望と加算は未確定のまま、本人の聞き取りを続けます。'),
+ line('hold-yu','yu','今日は、急がず聞いてほしい。まだ上手く言えないところもあるから。'),
+ line('hold-mahiru','mahiru','分かった。今度は、書き終わるまでじゃなくて、話し終わるまで一緒にいる。'),
+ line('hold-end','narrator','結論の欄は空白のままになった。空白を埋めるより先に、聞くべき声があった。',{ending:'hold'}),
+]
+export const trialEndings={cancel:{title:'戻った希望、残った痛み',text:'希望票を復元。支援完了の加算を取消。'},review:{title:'親切を、一行にしない',text:'希望票を復元。支援の内容を分けて再審査。'},hold:{title:'答えを書く、その前に',text:'手続きと加算を凍結。本人の聞き取りを継続。'}}
+export const voicedLines=[...trialNodes,...Object.values(hearings).map(h=>h.ask)].filter(n=>['yu','mahiru','yume'].includes(n.who))
